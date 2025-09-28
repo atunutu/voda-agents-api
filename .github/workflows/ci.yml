@@ -21,7 +21,9 @@ jobs:
 
       # Generate a fresh random secret for this job only
       - name: Generate JWT secret
-        run: echo "JWT_ACCESS_SECRET=$(node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\")" >> $GITHUB_ENV
+        run: |
+          node -e "console.log('JWT_ACCESS_SECRET=' + require('crypto').randomBytes(32).toString('hex'))" >> $GITHUB_ENV
+          echo "JWT_EXPIRES_IN=15m" >> $GITHUB_ENV
 
       - run: echo "JWT_EXPIRES_IN=15m" >> $GITHUB_ENV
       - run: npm ci
