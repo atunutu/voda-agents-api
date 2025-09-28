@@ -1,0 +1,31 @@
+{
+  "name": "voda-agents-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node src/index.js",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atunutu/voda-agents-api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/atunutu/voda-agents-api/issues"
+  },
+  "homepage": "https://github.com/atunutu/voda-agents-api#readme",
+  "dependencies": {
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.36.0",
+    "jest": "^30.2.0",
+    "supertest": "^7.1.4"
+  }
+}
