@@ -2,6 +2,7 @@
 const express = require('express');
 const authRoutes = require('./routes/auth');
 const agentRoutes = require('./routes/agents');
+const customerRoutes = require('./routes/customers');
 
 const dotenv = require('dotenv');
 dotenv.config();
@@ -19,5 +20,6 @@ app.get('/health', (req, res) => {
 // Mount new routes under short prefixes
 app.use('/auth', authRoutes);
 app.use('/agents', agentRoutes);
+app.use('/customers', customerRoutes);
 
 module.exports = app;
