@@ -4,17 +4,16 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { agents } = require('../data/agents');
+const prisma = require('../db/prisma');
 
 const router = express.Router();
 
 // Helper to sign a short-lived access token
 function signAccessToken(agent) {
   // Token subject is the agent id; include phone for convenience
-  return jwt.sign(
-    { sub: agent.id, phone: agent.phone },
-    process.env.JWT_ACCESS_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
-  );
+  const secret = process.env.JWT_ACCESS_SECRET || 'test-only-secret';
+  const expiresIn = process.env.JWT_EXPIRES_IN || '15m';
+  return jwt.sign({ sub: agent.id, phone: agent.phone }, secret, { expiresIn });
 }
 
 /**
@@ -30,26 +29,27 @@ router.post('/login', async (req, res) => {
     return res.status(400).json({ error: 'phone and password are required' });
   }
 
-  const agent = agents.find(a => a.phone === phone);
+  try {
+    const agent = await prisma.agent.findUnique({ where: { phone } });
 
-  //return error if input phone is not associated to any agent
-  if (!agent) {
-    return res.status(401).json({ error: 'Invalid credentials' });
+    //return error if agent does not exist or inactive
+    if (!agent) 
+        return res.status(401).json({ error: 'Invalid credentials' });
+    if (agent.status !== 'ACTIVE') 
+        return res.status(403).json({ error: 'Agent not active' });
+
+    const ok = await bcrypt.compare(password, agent.password);
+
+    //return error if passwords do not match
+    if (!ok) 
+        return res.status(401).json({ error: 'Invalid credentials' });
+
+    const accessToken = signAccessToken(agent);
+    return res.json({ accessToken });
+  }catch (e) {
+    // avoid leaking internals
+    return res.status(500).json({ error: 'Login failed' });
   }
-
-  // Check status of agent
-  if (agent.status !== 'ACTIVE') {
-    return res.status(403).json({ error: 'Agent not active' });
-  }
-
-  //returns error if password does not match
-  const ok = await bcrypt.compare(password, agent.passwordHash);
-  if (!ok) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  const accessToken = signAccessToken(agent);
-  return res.json({ accessToken });
 });
 
 /**
