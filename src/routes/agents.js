@@ -12,16 +12,19 @@ const router = express.Router();
  * Auth: Bearer <accessToken>
  * Response: id, name, phone, location (region, district, ward), status
  */
-router.get('/me', requireAuth, (req, res) => {
-//find agent in db, if not found return error
-  const agent = agents.find(a => a.id === req.user.id);
-  if (!agent) {
-    return res.status(404).json({ error: 'Agent not found' });
-  }
+router.get('/me', requireAuth, async (req, res) => {
+  //find agent in db, if not found return error
+  const agentId = req.user.id;
 
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+    select: { id: true, name: true, phone: true, region: true, district: true, ward: true, status: true }
+  });
+
+  if (!agent) 
+    return res.status(404).json({ error: 'Agent not found' }); 
   // Only return non-sensitive fields
-  const { id, name, phone, region, district, ward, status } = agent;
-  return res.json({ id, name, phone, region, district, ward, status });
+  return res.json(agent);
 });
 
 module.exports = router;
