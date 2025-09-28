@@ -2,7 +2,6 @@
 // For this branch only profile is done
 
 const express = require('express');
-const { agents } = require('../data/agents');
 const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
