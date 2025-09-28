@@ -85,5 +85,48 @@ router.post('/', requireAuth, (req, res) => {
   return res.status(201).json({ id: newCustomer.id });
 });
 
+/**
+ * (d) Agent recent registrations (paginated + searchable)
+ * GET /agents/me/registrations?page=1&pageSize=10&search=smith
+ *
+ * Search across: name, nida, region, district, ward (case-insensitive contains)
+ */
+router.get('/agents/me/registrations', requireAuth, (req, res) => {
+  const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1);
+  const pageSize = Math.min(100, Math.max(1, parseInt(String(req.query.pageSize ?? '10'), 10) || 10));
+  const search = typeof req.query.search === 'string' ? req.query.search.trim().toLowerCase() : '';
+
+  // Filter to current agent
+  let list = customers.filter(c => c.agentId === req.user.id);
+
+  // Optional search filter
+  if (search) {
+    list = list.filter(c => {
+      return (
+        c.name.toLowerCase().includes(search) ||
+        c.nida.toLowerCase().includes(search) ||
+        c.region.toLowerCase().includes(search) ||
+        c.district.toLowerCase().includes(search) ||
+        c.ward.toLowerCase().includes(search)
+      );
+    });
+  }
+
+  // Sort by createdAt desc (most recent first)
+  list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const total = list.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const start = (page - 1) * pageSize;
+  const items = list.slice(start, start + pageSize);
+
+  return res.json({
+    items,
+    page,
+    pageSize,
+    total,
+    totalPages
+  });
+});
 
 module.exports = router;
