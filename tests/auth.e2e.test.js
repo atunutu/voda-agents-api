@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../src/app');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const prisma = require('./_prisma');
 
 const PHONE = '255700000001';

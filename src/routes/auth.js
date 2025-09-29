@@ -1,7 +1,7 @@
 // Auth routes: login (issue access token) and logout (no-op for now).
 
 const express = require('express');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = require('../db/prisma');
 

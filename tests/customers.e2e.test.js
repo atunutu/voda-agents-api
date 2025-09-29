@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../src/app');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const prisma = require('./_prisma');
 
 const PHONE = '255700000001';
@@ -101,7 +101,7 @@ describe('Customers', () => {
         region: 'Dar es Salaam',
         district: 'Ilala',
         ward: 'Upanga',
-        nida: '12345678901234567891'
+        nida: '12345678901234567870'
       });
     expect(first.status).toBe(201);
 
@@ -114,7 +114,7 @@ describe('Customers', () => {
         region: 'Dar es Salaam',
         district: 'Temeke',
         ward: 'Kurasini',
-        nida: '12345678901234567891' // duplicate
+        nida: '12345678901234567870' // duplicate
       });
 
     expect(second.status).toBe(409);
