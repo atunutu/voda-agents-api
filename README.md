@@ -288,5 +288,3 @@ Observability: request logging, metrics, trace IDs.
 Idempotency keys for customer registration.
 Data isolation in tests to avoid false fails.
 
-
-
