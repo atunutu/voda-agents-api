@@ -193,7 +193,7 @@ Alternatively you can:-
   -Add the following requests 
 
 1) Login
-  ** NOTE: run node prisma/seed.js to create agent **
+  NOTE: run node prisma/seed.js to create agent
   Method: POST
   URL: http://localhost:3000/auth/login
   Body (raw JSON):
