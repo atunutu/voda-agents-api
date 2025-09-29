@@ -21,5 +21,9 @@ app.get('/health', (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/agents', agentRoutes);
 app.use('/customers', customerRoutes);
+// Central error handler to see real errors during dev/tests
+app.use((err, _req, res, _next) => {
+  res.status(500).json({ error: 'InternalError', message: err.message });
+});
 
 module.exports = app;

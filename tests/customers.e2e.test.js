@@ -1,12 +1,39 @@
 const request = require('supertest');
 const app = require('../src/app');
-const { DEMO_PASSWORD } = require('../src/data/agents');
+const bcrypt = require('bcryptjs');
+const prisma = require('./_prisma');
+
+const PHONE = '255700000001';
+const PASS = 'Agent@123';
+
+beforeAll(async () => {
+  const hash = await bcrypt.hash(PASS, 10);
+  await prisma.agent.upsert({
+    where: { phone: PHONE },
+    update: { password: hash, status: 'ACTIVE' },
+    create: {
+      name: 'Jane Agent',
+      phone: PHONE,
+      password: hash,
+      region: 'Dar es Salaam',
+      district: 'Ilala',
+      ward: 'Upanga',
+      status: 'ACTIVE'
+    }
+  });
+});
+
+afterAll(async () => {
+  await prisma.customer.deleteMany({});
+  await prisma.agent.deleteMany({});
+  await prisma.$disconnect();
+});
 
 // helper to get a token via login
 async function login() {
   const res = await request(app)
     .post('/auth/login')
-    .send({ phone: '255700000001', password: DEMO_PASSWORD });
+    .send({ phone: PHONE, password: PASS });
   return res.body.accessToken;
 }
 
@@ -74,7 +101,7 @@ describe('Customers', () => {
         region: 'Dar es Salaam',
         district: 'Ilala',
         ward: 'Upanga',
-        nida: '12345678901234567891'
+        nida: '12345678901234567870'
       });
     expect(first.status).toBe(201);
 
@@ -87,7 +114,7 @@ describe('Customers', () => {
         region: 'Dar es Salaam',
         district: 'Temeke',
         ward: 'Kurasini',
-        nida: '12345678901234567891' // duplicate
+        nida: '12345678901234567870' // duplicate
       });
 
     expect(second.status).toBe(409);

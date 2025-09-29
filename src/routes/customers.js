@@ -3,7 +3,7 @@
 
 const express = require('express');
 const { requireAuth } = require('../middleware/auth');
-const { customers, uid } = require('../data/customers');
+const prisma = require('../db/prisma');
 
 const router = express.Router();
 
@@ -52,7 +52,7 @@ function validateCustomerBody(body) {
  *  - Must be authenticated (token)
  *  - NIDA must be unique (globally) for this simple demo
  */
-router.post('/', requireAuth, (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   const errors = validateCustomerBody(req.body || {});
   if (errors.length) {
     return res.status(400).json({ error: 'ValidationError', details: errors });
@@ -60,29 +60,28 @@ router.post('/', requireAuth, (req, res) => {
 
   const { name, dob, region, district, ward, nida } = req.body;
 
-  // Check duplicate NIDA (global uniqueness)
-  const exists = customers.find(c => c.nida === nida);
-  if (exists) {
-    return res.status(409).json({ error: 'Customer with this NIDA already exists' });
+    try {
+    // Enforce unique NIDA 
+    const exists = await prisma.customer.findUnique({ where: { nida } });
+    if (exists) return res.status(409).json({ error: 'Customer with this NIDA already exists' });
+
+    const created = await prisma.customer.create({
+      data: {
+        name: name.trim(),
+        dob: new Date(dob),
+        region: region.trim(),
+        district: district.trim(),
+        ward: ward.trim(),
+        nida: nida.trim(),
+        agentId: req.user.id
+      },
+      select: { id: true }
+    });
+
+    return res.status(201).json(created);
+  } catch (e) {
+    return res.status(500).json({ error: 'Create customer failed' });
   }
-
-  // Parse date reliably
-  const dobDate = new Date(dob);
-
-  const newCustomer = {
-    id: uid(),
-    agentId: req.user.id, // from requireAuth
-    name: name.trim(),
-    dob: dobDate.toISOString(),
-    region: region.trim(),
-    district: district.trim(),
-    ward: ward.trim(),
-    nida: nida.trim(),
-    createdAt: new Date().toISOString()
-  };
-
-  customers.push(newCustomer);
-  return res.status(201).json({ id: newCustomer.id });
 });
 
 /**
@@ -91,41 +90,43 @@ router.post('/', requireAuth, (req, res) => {
  *
  * Search across: name, nida, region, district, ward (case-insensitive contains)
  */
-router.get('/agents/me/registrations', requireAuth, (req, res) => {
+router.get('/agents/me/registrations', requireAuth, async (req, res) => {
   const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1);
   const pageSize = Math.min(100, Math.max(1, parseInt(String(req.query.pageSize ?? '10'), 10) || 10));
-  const search = typeof req.query.search === 'string' ? req.query.search.trim().toLowerCase() : '';
+  const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
 
-  // Filter to current agent
-  let list = customers.filter(c => c.agentId === req.user.id);
+  // Filter to current agent and enforce optional search filter
+  const where = {
+    agentId: req.user.id,
+    ...(search
+      ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { nida: { contains: search, mode: 'insensitive' } },
+            { region: { contains: search, mode: 'insensitive' } },
+            { district: { contains: search, mode: 'insensitive' } },
+            { ward: { contains: search, mode: 'insensitive' } }
+          ]
+        }
+      : {})
+  };
 
-  // Optional search filter
-  if (search) {
-    list = list.filter(c => {
-      return (
-        c.name.toLowerCase().includes(search) ||
-        c.nida.toLowerCase().includes(search) ||
-        c.region.toLowerCase().includes(search) ||
-        c.district.toLowerCase().includes(search) ||
-        c.ward.toLowerCase().includes(search)
-      );
-    });
-  }
-
-  // Sort by createdAt desc (most recent first)
-  list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-  const total = list.length;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const start = (page - 1) * pageSize;
-  const items = list.slice(start, start + pageSize);
+  const [items, total] = await Promise.all([
+    prisma.customer.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize
+    }),
+    prisma.customer.count({ where })
+  ]);
 
   return res.json({
     items,
     page,
     pageSize,
     total,
-    totalPages
+    totalPages: Math.max(1, Math.ceil(total / pageSize))
   });
 });
 

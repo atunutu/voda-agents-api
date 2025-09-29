@@ -1,6 +1,6 @@
 // Minimal in-memory "database" of agents.
 // NOTE: Later this will be replaced this with a real DB
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 // Pre-hash a reasonable demo password.
 // In production we will store only the hash from a registration step.
