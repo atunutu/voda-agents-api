@@ -31,8 +31,6 @@ jobs:
           echo "JWT_EXPIRES_IN=15m" >> $GITHUB_ENV
 
       - run: echo "JWT_EXPIRES_IN=15m" >> $GITHUB_ENV
-      - run: npm ci
-      - run: npm test
 
       - name: Install
         run: npm ci
