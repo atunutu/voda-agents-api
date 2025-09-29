@@ -1,0 +1,132 @@
+{
+  "info": {
+    "name": "Voda Agents API",
+    "_postman_id": "7b2d6f64-9f2a-4d7a-9e86-collection-v1",
+    "description": "Collection for Voda Agents backend assessment. Set environment vars: base_url, phone, password, accessToken.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /auth/login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Logs in an agent by phone/password and returns an accessToken."
+          }
+        },
+        {
+          "name": "POST /auth/logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Revokes the current access token via jti; returns 204 on success."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Agent",
+      "item": [
+        {
+          "name": "GET /agents/me",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/agents/me",
+              "host": ["{{base_url}}"],
+              "path": ["agents", "me"]
+            },
+            "description": "Returns the logged-in agent's profile."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "POST /customers (create)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Alpha\",\n  \"dob\": \"1991-03-03\",\n  \"region\": \"Dar es Salaam\",\n  \"district\": \"Ilala\",\n  \"ward\": \"Upanga\",\n  \"nida\": \"22222222222222222222\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/customers",
+              "host": ["{{base_url}}"],
+              "path": ["customers"]
+            },
+            "description": "Registers a customer. NIDA must be exactly 20 digits."
+          }
+        },
+        {
+          "name": "GET /customers/agents/me/registrations (list)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/customers/agents/me/registrations?page=1&pageSize=10&search=alpha",
+              "host": ["{{base_url}}"],
+              "path": ["customers", "agents", "me", "registrations"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" },
+                { "key": "search", "value": "alpha" }
+              ]
+            },
+            "description": "Paginated, searchable list of the logged-in agent's recent registrations."
+          }
+        }
+      ]
+    }
+  ],
+  "protocolProfileBehavior": {}
+}
