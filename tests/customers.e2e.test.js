@@ -6,7 +6,9 @@ const prisma = require('./_prisma');
 const PHONE = '255700000001';
 const PASS = 'Agent@123';
 
-beforeAll(async () => {
+beforeEach(async () => {
+  await prisma.revokedToken.deleteMany({});
+  await prisma.customer.deleteMany({});
   const hash = await bcrypt.hash(PASS, 10);
   await prisma.agent.upsert({
     where: { phone: PHONE },
@@ -25,6 +27,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await prisma.customer.deleteMany({});
+  await prisma.revokedToken.deleteMany({});
   await prisma.agent.deleteMany({});
   await prisma.$disconnect();
 });
@@ -34,6 +37,7 @@ async function login() {
   const res = await request(app)
     .post('/auth/login')
     .send({ phone: PHONE, password: PASS });
+  expect(res.status).toBe(200);
   return res.body.accessToken;
 }
 

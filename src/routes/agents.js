@@ -15,7 +15,7 @@ router.get('/me', requireAuth, async (req, res) => {
   //find agent in db, if not found return error
   try {
     const agent = await prisma.agent.findUnique({
-      where: { id: req.user.id },
+      where: { phone: req.user.phone },
       select: { id: true, name: true, phone: true, region: true, district: true, ward: true, status: true }
     });
     if (!agent) 

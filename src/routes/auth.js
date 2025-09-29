@@ -3,6 +3,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { randomUUID } = require('crypto');          
 const prisma = require('../db/prisma');
 
 const router = express.Router();
@@ -12,7 +13,12 @@ function signAccessToken(agent) {
   // Token subject is the agent id; include phone for convenience
   const secret = process.env.JWT_ACCESS_SECRET || 'test-only-secret';
   const expiresIn = process.env.JWT_EXPIRES_IN || '15m';
-  return jwt.sign({ sub: agent.id, phone: agent.phone }, secret, { expiresIn });
+  //generate a unique id token 
+  const jti = randomUUID(); 
+  return jwt.sign(
+    { sub: agent.id, phone: agent.phone, jti }, 
+    secret,
+    { expiresIn });
 }
 
 /**
@@ -53,10 +59,37 @@ router.post('/login', async (req, res) => {
 
 /**
  * Agent logout
- * Returns 204 to complete the flow for now.
+ * Reads the current Bearer token, records its jti in the RevokedToken table
+ * so it can’t be used again.
  */
-router.post('/logout', (_req, res) => {
-  return res.status(204).send();
+router.post('/logout', async (req, res) => {
+  const header = req.headers.authorization || '';
+  const [, token] = header.split(' ');
+  if (!token) 
+    return res.status(401).json({ error: 'Missing Authorization token' });
+  
+  try {
+    const secret = process.env.JWT_ACCESS_SECRET || 'test-only-secret';
+    const decoded = jwt.verify(token, secret); // safe; already verified earlier
+
+    // if no jti, nothing to revoke (older tokens); just return 204
+    if (!decoded.jti) 
+        return res.status(204).send();
+
+    // Convert JWT exp (seconds since epoch) to JS Date
+    const expiresAt = new Date(decoded.exp * 1000);
+
+    // Upsert in case of duplicate calls
+    await prisma.revokedToken.upsert({
+      where: { jti: decoded.jti },
+      update: { expiresAt },
+      create: { jti: decoded.jti, expiresAt }
+    });
+
+    return res.status(204).send();
+  } catch {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
 });
 
 module.exports = router;
