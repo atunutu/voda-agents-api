@@ -30,6 +30,7 @@ Copy and edit:
 cp .env.example .env
 
 Minimal .env file:
+
   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/voda_agents
   JWT_ACCESS_SECRET=super-secret-jwt-key 
   JWT_EXPIRES_IN=15m
@@ -37,6 +38,7 @@ Minimal .env file:
   NODE_ENV=development
 
 generate JWT_ACCESS_SECRET using:-
+
   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"  
 
 3) Database & migrations
@@ -64,11 +66,13 @@ All state-changing endpoints require Content-Type: application/json and an Autho
 Authorization: Bearer <accessToken>
 
 Health
+
   GET /health
   
   200 OK { "status": "ok" }
 
 Auth
+
   1)POST http://localhost:3000/auth/login
     Authenticate an agent by phone/password.
     Body(JSON):-
@@ -93,6 +97,7 @@ Auth
     401 if token is missing/invalid
 
 Agent
+
   1)GET http://localhost:3000/agents/me
     Returns the logged-in agent profile.
     Headers: Authorization: Bearer <accessToken>
@@ -112,6 +117,7 @@ Agent
       404 – agent not found
 
 Customers
+
   1)POST http://localhost:3000/customers
     Create (register) a new customer.
     Headers: Authorization: Bearer <accessToken> 
@@ -182,12 +188,12 @@ Customers
     - **Customers → Create** → test customer registration with NIDA validation
     - **Customers → Get** → get created customers
 
-Alternatively you can
--Create a Collection in postman (e.g., “Voda Agents API”).
--Add the following requests 
+Alternatively you can:-
+  -Create a Collection in postman (e.g., “Voda Agents API”).
+  -Add the following requests 
 
 1) Login
-  # NOTE: run node prisma/seed.js to create agent
+  ** NOTE: run node prisma/seed.js to create agent **
   Method: POST
   URL: http://localhost:3000/auth/login
   Body (raw JSON):
@@ -272,14 +278,15 @@ Duplicate NIDA (409)
 
 CORS error in browser
 -Add your frontend origin to CORS_ORIGINS in .env (comma-separated list) and restart the server.
+
 CI Tests failure
 -Tests flaky due to async, run from postman for validity 
 
 # ROOM FOR IMPROVEMENTS
-Refresh tokens with rotation & blacklist on compromise
-Observability: request logging, metrics, trace IDs
-Idempotency keys for customer registration
-Data isolation in tests to avoid false fails
+Refresh tokens with rotation & blacklist on compromise.
+Observability: request logging, metrics, trace IDs.
+Idempotency keys for customer registration.
+Data isolation in tests to avoid false fails.
 
 
 
